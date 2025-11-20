@@ -10,6 +10,6 @@ import java.util.Map;
 public class HomeController {
     @GetMapping("/api/test")
     public ResponseEntity<Map<String, String>> health() {
-        return ResponseEntity.ok(Map.of("message", "안녕 이건 백엔드에서 보내는 json"));
+        return ResponseEntity.ok(Map.of("message", "hi i m from json"));
     }
 }
