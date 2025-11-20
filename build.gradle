@@ -24,6 +24,7 @@ dependencies {
     implementation 'org.springframework:spring-jdbc:5.3.30'
     implementation 'mysql:mysql-connector-java:8.0.31'
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-security'  // cors 설정중 추가한 의존성
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
