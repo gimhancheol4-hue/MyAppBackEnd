@@ -10,7 +10,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**") // 모든 경로에 대해 CORS 허용
-                .allowedOrigins("http://localhost:3000") // 허용할 프론트 도메인
+                .allowedOrigins("https://gimhancheol4-hue.github.io/react_test/") // 허용할 프론트 도메인
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // 허용 메서드
                 .allowedHeaders("*") // 모든 헤더 허용
                 .allowCredentials(true) // 인증정보(쿠키 등) 허용 여부
