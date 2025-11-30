@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.Eval.EvalDAO">
+
+    <!-- 1. 테스트용 쿼리 -->
+    <select id="testQuery" resultType="string">
+        SELECT 'OK' AS result
+    </select>
+
+    <select id="getEmployeeByDept" resultType="map" parameterType="string">
+        SELECT
+        U.ID,
+        U.INST_CD,
+        U.EMP_NO,
+        U.USER_NM,
+        U.USER_EMAIL,
+        U.MOBILE_NO,
+        U.POST_CD,
+        U.REAL_ENT_DT,
+        D.DEPT_CD,
+        D.DEPT_NM
+        FROM withinfo_dev.TUSR001_USER U
+        JOIN withinfo_dev.TCOM003_DEPT D
+        ON U.INST_CD = D.INST_CD
+        WHERE D.DEPT_CD = #{deptCd}
+        ORDER BY U.ID
+    </select>
+
+
+    <!-- 3. 부서 정보 한 건 조회 -->
+    <select id="getDept" resultType="map">
+        SELECT
+        ID,
+        INST_CD,
+        DEPT_CD,
+        DEPT_NM,
+        UPPER_DEPT_CD,
+        DEPT_LVL_CD
+        FROM withinfo_dev.TCOM003_DEPT
+        ORDER BY ID
+    </select>
+
+    <!-- 4. 프로젝트 정보 한 건 조회 -->
+    <select id="getProject" resultType="map">
+        SELECT
+        ID,
+        INST_CD,
+        PJ_CD,
+        PJ_NM,
+        PJ_CNTNT,
+        CUS_NM,
+        PM_EMP_NO,
+        PJ_CTR_STDT,
+        PJ_CTR_ENDT,
+        PJ_START_DT,
+        PJ_END_DT
+        FROM withinfo_dev.TPJT001_PROJECT_TMP
+        ORDER BY ID
+    </select>
+
+</mapper>
