@@ -10,6 +10,7 @@
         SELECT 'OK' AS result
     </select>
 
+    <!-- 부서별 “담당 사원(최종변경사원)” 조회 -->
     <select id="getEmployeeByDept" resultType="map" parameterType="string">
         SELECT
         U.ID,
@@ -22,12 +23,14 @@
         U.REAL_ENT_DT,
         D.DEPT_CD,
         D.DEPT_NM
-        FROM withinfo_dev.TUSR001_USER U
-        JOIN withinfo_dev.TCOM003_DEPT D
+        FROM TUSR001_USER U
+        JOIN TCOM003_DEPT D
         ON U.INST_CD = D.INST_CD
+        AND U.EMP_NO  = D.LST_CHG_EMP_NO   <!-- 🔵 여기서 관계 맺음 -->
         WHERE D.DEPT_CD = #{deptCd}
         ORDER BY U.ID
     </select>
+
 
 
     <!-- 3. 부서 정보 한 건 조회 -->
