@@ -23,8 +23,8 @@
         U.REAL_ENT_DT,
         D.DEPT_CD,
         D.DEPT_NM
-        FROM TUSR001_USER U
-        JOIN TCOM003_DEPT D
+        FROM withinfo_dev.TUSR001_USER U
+        JOIN withinfo_dev.TCOM003_DEPT D
         ON U.INST_CD = D.INST_CD
         AND U.EMP_NO  = D.LST_CHG_EMP_NO   <!-- 🔵 여기서 관계 맺음 -->
         WHERE D.DEPT_CD = #{deptCd}
@@ -46,22 +46,6 @@
         ORDER BY ID
     </select>
 
-    <!-- 4. 프로젝트 정보 한 건 조회 -->
-    <select id="getProject" resultType="map">
-        SELECT
-        ID,
-        INST_CD,
-        PJ_CD,
-        PJ_NM,
-        PJ_CNTNT,
-        CUS_NM,
-        PM_EMP_NO,
-        PJ_CTR_STDT,
-        PJ_CTR_ENDT,
-        PJ_START_DT,
-        PJ_END_DT
-        FROM withinfo_dev.TPJT001_PROJECT_TMP
-        ORDER BY ID
-    </select>
+
 
 </mapper>
