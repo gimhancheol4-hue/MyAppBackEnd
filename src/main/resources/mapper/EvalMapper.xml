@@ -23,11 +23,11 @@
         U.REAL_ENT_DT,
         D.DEPT_CD,
         D.DEPT_NM
-        FROM TUSR001_USER U
-        JOIN TCOM010_EMP_DEPT ED
+        FROM withinfo_dev.TUSR001_USER U
+        JOIN withinfo_dev.TCOM010_EMP_DEPT ED
         ON U.INST_CD = ED.INST_CD
         AND U.EMP_NO  = ED.EMP_NO
-        JOIN TCOM003_DEPT D
+        JOIN withinfo_dev.TCOM003_DEPT D
         ON ED.INST_CD = D.INST_CD
         AND ED.DEPT_CD = D.DEPT_CD
         WHERE D.DEPT_CD = #{deptCd}
