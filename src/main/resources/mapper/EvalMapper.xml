@@ -49,7 +49,6 @@
         INSERT INTO EVAL_MAPPING (
         INST_CD,
         YEAR,
-        EVAL_TYPE,
 
         TARGET_EMP_NO,
         TARGET_DEPT_CD,
@@ -72,7 +71,6 @@
         SELECT
         M.INST_CD,
         #{year}                                 AS YEAR,
-        #{evalType}                             AS EVAL_TYPE,
 
         M.EMP_NO                                AS TARGET_EMP_NO,
         M.DEPT_CD                               AS TARGET_DEPT_CD,
@@ -126,7 +124,6 @@
     <delete id="deleteEvalMapping" parameterType="map">
         DELETE FROM EVAL_MAPPING
         WHERE YEAR = #{year}
-        AND EVAL_TYPE = #{evalType}
         <if test="instCd != null and instCd != ''">
             AND INST_CD = #{instCd}
         </if>

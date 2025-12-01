@@ -56,7 +56,6 @@ public class EvalController {
         // 파라미터 가공 (필요하면 기본값 세팅)
         Map<String, Object> param = new HashMap<>();
         param.put("year",        body.get("year"));        // "2025"
-        param.put("evalType",    body.get("evalType"));    // "INS"
         param.put("instCd",      body.get("instCd"));      // "001" (nullable)
         param.put("selfDueDate", body.get("selfDueDate")); // "2025-12-10"
         param.put("firstDueDate", body.get("firstDueDate"));
