@@ -58,7 +58,6 @@
         TARGET_DEPT_CD,
         TARGET_DUTY_CD,
 
-        SWEAR_SUBMIT_YN,
 
         SELF_EVAL_YN,
         SELF_EVAL_DUE_DATE,
@@ -80,8 +79,6 @@
         X.TARGET_EMP_NO,
         X.TARGET_DEPT_CD,
         X.TARGET_DUTY_CD,
-
-        'N'                                       AS SWEAR_SUBMIT_YN,
 
         'Y'                                       AS SELF_EVAL_YN,
     ]]>
