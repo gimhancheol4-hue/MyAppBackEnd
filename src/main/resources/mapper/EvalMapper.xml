@@ -46,7 +46,7 @@
 
     <!-- 3. 인사평가 매핑 -->
     <insert id="createEvalMapping" parameterType="map">
-        INSERT INTO EVAL_MAPPING (
+        INSERT INTO withinfo_dev.EVAL_MAPPING (
         INST_CD,
         YEAR,
 
@@ -93,22 +93,22 @@
         #{secondDueDate}                         AS SECOND_EVAL_DUE_DATE,
         'N'                                      AS SECOND_EVAL_SUBMIT_YN
 
-        FROM TCOM010_EMP_DEPT M
+        FROM withinfo_dev.TCOM010_EMP_DEPT M
 
         -- 1차 평가자 (부서장)
-        LEFT JOIN TCOM010_EMP_DEPT L1
+        LEFT JOIN withinfo_dev.TCOM010_EMP_DEPT L1
         ON L1.INST_CD = M.INST_CD
         AND L1.DEPT_CD = M.DEPT_CD
         AND L1.DEPT_HDR_YN = 'Y'
         AND L1.MAIN_DEPT_YN = 'Y'
 
         -- 2차 평가자 (상위직급 중 최고 DUTY_CD 1명)
-        LEFT JOIN TCOM010_EMP_DEPT L2
+        LEFT JOIN withinfo_dev.TCOM010_EMP_DEPT L2
         ON L2.INST_CD = M.INST_CD
         AND L2.DEPT_CD = M.DEPT_CD
         AND L2.DUTY_CD = (
         SELECT MAX(L3.DUTY_CD)
-        FROM TCOM010_EMP_DEPT L3
+        FROM withinfo_dev.TCOM010_EMP_DEPT L3
         WHERE L3.INST_CD = M.INST_CD
         AND L3.DEPT_CD = M.DEPT_CD
         AND L3.MAIN_DEPT_YN = 'Y'
@@ -122,7 +122,7 @@
     </insert>
 
     <delete id="deleteEvalMapping" parameterType="map">
-        DELETE FROM EVAL_MAPPING
+        DELETE FROM withinfo_dev.EVAL_MAPPING
         WHERE YEAR = #{year}
         <if test="instCd != null and instCd != ''">
             AND INST_CD = #{instCd}

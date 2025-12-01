@@ -40,7 +40,7 @@ public class EvalController {
      * - 1행 = 1명 (자기/1차/2차 평가자 정보 포함)
      *
      * 예시 요청:
-     * POST /api/eval/mapping/create
+     * POST /eval/mapping/create
      * {
      *   "year": "2025",
      *   "evalType": "INS",
