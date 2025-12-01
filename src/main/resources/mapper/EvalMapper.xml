@@ -369,8 +369,8 @@
         section_name   AS sectionName,
         default_value  AS defaultValue,
         options_json   AS optionsJson
-        FROM eval_layout
-        WHERE withinfo_dev.eval_form_code = #{formCode}
+        FROM withinfo_dev.eval_layout
+        WHERE eval_form_code = #{formCode}
         AND layout_ver     = #{layoutVer}
         AND active_yn      = 'Y'
         ORDER BY sort_order, layout_id
