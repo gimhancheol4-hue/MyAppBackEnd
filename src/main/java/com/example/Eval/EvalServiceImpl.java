@@ -48,4 +48,14 @@ public class EvalServiceImpl implements EvalService {
     public List<Map<String,Object>> getEvalMapping(Map<String, Object> param){
         return evalDAO.getEvalMapping(param);
     };
+
+    @Override
+    public List<Map<String, Object>> getEvalForms(Map<String, Object> param) {
+        return evalDAO.getEvalForms(param);
+    }
+
+    @Override
+    public List<Map<String, Object>> getEvalLayout(Map<String, Object> param) {
+        return evalDAO.getEvalLayout(param);
+    }
 }

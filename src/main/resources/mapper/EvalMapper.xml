@@ -323,4 +323,40 @@
 ]]>
     </select>
 
+    <!-- 문서 종류 목록 조회 -->
+    <select id="getEvalForms" parameterType="map" resultType="map">
+        SELECT
+        l.eval_form_code AS formCode,
+        l.eval_form_name AS formName
+        FROM withinfo_dev.eval_layout l
+        WHERE l.active_yn = 'Y'
+        GROUP BY l.eval_form_code, l.eval_form_name
+        ORDER BY l.eval_form_code
+    </select>
+    <!-- 문서 레이아웃(필드 목록) 조회 -->
+    <select id="getEvalLayout" parameterType="map" resultType="map">
+        SELECT
+        layout_id      AS layoutId,
+        eval_form_code AS formCode,
+        eval_form_name AS formName,
+        layout_ver     AS layoutVer,
+        active_yn      AS activeYn,
+        field_code     AS fieldCode,
+        field_label    AS fieldLabel,
+        field_type     AS fieldType,
+        required_yn    AS requiredYn,
+        max_length     AS maxLength,
+        sort_order     AS sortOrder,
+        section_name   AS sectionName,
+        default_value  AS defaultValue,
+        options_json   AS optionsJson
+        FROM eval_layout
+        WHERE withinfo_dev.eval_form_code = #{formCode}
+        AND layout_ver     = #{layoutVer}
+        AND active_yn      = 'Y'
+        ORDER BY sort_order, layout_id
+    </select>
+
+
+
 </mapper>

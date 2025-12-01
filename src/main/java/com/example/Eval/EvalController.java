@@ -97,4 +97,48 @@ public class EvalController {
         return result;
     }
 
+    /**
+     * 인사평가/업무서약/프로젝트 평가 "문서 목록" 조회
+     * - 프론트 Evaluation.js 에서 드롭다운에 뿌려줄 데이터
+     *
+     * 예시 호출:
+     * GET /eval/forms?year=2025
+     */
+    @GetMapping("/forms")
+    public Map<String, Object> getEvalForms(@RequestParam(required = false) String year) {
+
+        Map<String, Object> param = new HashMap<>();
+        param.put("year", year);   // 연도별로 다르게 관리하고 싶으면 사용, 아니면 서비스에서 무시해도 됨
+
+        // 🔹 서비스에서 eval_layout, eval_weight_rule 등을 참조해서
+        //    formCode, formName, steps(SELF/FIRST/SECOND...) 리스트 만들어서 리턴하도록 구현
+        List<Map<String, Object>> list = evalService.getEvalForms(param);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("count", list.size());
+        result.put("data", list);
+
+        return result;
+    }
+
+    @GetMapping("/layout")
+    public Map<String, Object> getEvalLayout(
+            @RequestParam("formCode") String formCode,
+            @RequestParam(name = "layoutVer", required = false, defaultValue = "1") int layoutVer
+    ) {
+        Map<String, Object> param = new HashMap<>();
+        param.put("formCode", formCode);
+        param.put("layoutVer", layoutVer);
+
+        List<Map<String, Object>> list = evalService.getEvalLayout(param);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("count", list.size());
+        result.put("data", list);
+        return result;
+    }
+
+
 }
