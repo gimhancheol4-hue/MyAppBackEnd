@@ -132,4 +132,103 @@
         </if>
     </delete>
 
+    <!-- 평가 매핑 조회 -->
+    <select id="getEvalMapping" parameterType="map" resultType="map">
+        <![CDATA[
+    SELECT
+        EM.ID,
+        EM.INST_CD,
+        EM.YEAR,
+
+        -- 피평가자
+        EM.TARGET_EMP_NO,
+        TU.USER_NM          AS TARGET_USER_NM,
+        EM.TARGET_DEPT_CD,
+        TD.DEPT_NM          AS TARGET_DEPT_NM,
+        EM.TARGET_DUTY_CD,
+
+        -- 업무서약서
+        EM.SWEAR_SUBMIT_YN,
+
+        -- 자기평가
+        EM.SELF_EVAL_YN,
+        EM.SELF_EVAL_DUE_DATE,
+        EM.SELF_EVAL_SUBMIT_YN,
+
+        -- 1차 평가
+        EM.FIRST_EVALUATOR_EMP_NO,
+        FU.USER_NM          AS FIRST_EVALUATOR_USER_NM,
+        EM.FIRST_EVAL_DUE_DATE,
+        EM.FIRST_EVAL_SUBMIT_YN,
+
+        -- 2차 평가
+        EM.SECOND_EVALUATOR_EMP_NO,
+        SU.USER_NM          AS SECOND_EVALUATOR_USER_NM,
+        EM.SECOND_EVAL_DUE_DATE,
+        EM.SECOND_EVAL_SUBMIT_YN,
+
+        EM.REG_DATE,
+        EM.MOD_DATE
+    FROM EVAL_MAPPING EM
+        -- 피평가자 정보
+        LEFT JOIN withinfo_dev.TUSR001_USER TU
+            ON TU.INST_CD = EM.INST_CD
+           AND TU.EMP_NO  = EM.TARGET_EMP_NO
+
+        -- 1차 평가자 정보
+        LEFT JOIN withinfo_dev.TUSR001_USER FU
+            ON FU.INST_CD = EM.INST_CD
+           AND FU.EMP_NO  = EM.FIRST_EVALUATOR_EMP_NO
+
+        -- 2차 평가자 정보
+        LEFT JOIN withinfo_dev.TUSR001_USER SU
+            ON SU.INST_CD = EM.INST_CD
+           AND SU.EMP_NO  = EM.SECOND_EVALUATOR_EMP_NO
+
+        -- 부서 정보
+        LEFT JOIN withinfo_dev.TCOM003_DEPT TD
+            ON TD.INST_CD = EM.INST_CD
+           AND TD.DEPT_CD = EM.TARGET_DEPT_CD
+
+    WHERE 1 = 1
+]]>
+        <if test="instCd != null and instCd != ''">
+            AND EM.INST_CD = #{instCd}
+        </if>
+
+        <if test="year != null and year != ''">
+            <![CDATA[
+        AND EM.YEAR = #{year}
+        ]]>
+        </if>
+
+        <if test="deptCd != null and deptCd != ''">
+            <![CDATA[
+        AND EM.TARGET_DEPT_CD = #{deptCd}
+        ]]>
+        </if>
+
+        <if test="targetEmpNo != null and targetEmpNo != ''">
+            <![CDATA[
+        AND EM.TARGET_EMP_NO = #{targetEmpNo}
+        ]]>
+        </if>
+
+        <if test="evaluatorEmpNo != null and evaluatorEmpNo != ''">
+            <![CDATA[
+        AND (
+              EM.FIRST_EVALUATOR_EMP_NO  = #{evaluatorEmpNo}
+           OR EM.SECOND_EVALUATOR_EMP_NO = #{evaluatorEmpNo}
+        )
+        ]]>
+        </if>
+
+        <![CDATA[
+    ORDER BY
+        EM.TARGET_DEPT_CD,
+        EM.TARGET_DUTY_CD,
+        EM.TARGET_EMP_NO
+]]>
+    </select>
+
 </mapper>

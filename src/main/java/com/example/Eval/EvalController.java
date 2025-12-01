@@ -72,4 +72,29 @@ public class EvalController {
 
         return result;
     }
+
+    @PostMapping("/mapping/select")
+    public Map<String, Object> getEvalMapping(@RequestBody Map<String, Object> body) {
+
+        Map<String, Object> param = new HashMap<>();
+
+        // 📌 프론트에서 받은 값 그대로 세팅
+        param.put("instCd",        body.get("instCd"));        // 필수
+        param.put("year",          body.get("year"));          // 필수
+        param.put("deptCd",        body.get("deptCd"));        // 선택
+        param.put("targetEmpNo",   body.get("targetEmpNo"));   // 선택
+        param.put("evaluatorEmpNo",body.get("evaluatorEmpNo"));// 선택
+
+        // 📌 조회 실행
+        List<Map<String, Object>> list = evalService.getEvalMapping(param);
+
+        // 📌 응답 생성
+        Map<String, Object> result = new HashMap<>();
+        result.put("success", true);
+        result.put("count", list.size());
+        result.put("data", list);
+
+        return result;
+    }
+
 }

@@ -20,4 +20,6 @@ public interface EvalDAO {
     int createEvalMapping(Map<String, Object> param);
 
     int deleteEvalMapping(Map<String, Object> param);
+
+    List<Map<String,Object>> getEvalMapping(Map<String, Object> param);
 }

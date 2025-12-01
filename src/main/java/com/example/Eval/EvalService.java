@@ -14,4 +14,6 @@ public interface EvalService {
     List<Map<String, Object>> getProject();
 
     int createEvalMapping(Map<String, Object> param);
+
+    List<Map<String,Object>> getEvalMapping(Map<String, Object> param);
 }

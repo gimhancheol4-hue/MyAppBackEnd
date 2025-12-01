@@ -44,4 +44,8 @@ public class EvalServiceImpl implements EvalService {
 
         return evalDAO.createEvalMapping(param);
     }
+
+    public List<Map<String,Object>> getEvalMapping(Map<String, Object> param){
+        return evalDAO.getEvalMapping(param);
+    };
 }
