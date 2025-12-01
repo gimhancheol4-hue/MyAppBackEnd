@@ -169,7 +169,7 @@
 
         EM.REG_DATE,
         EM.MOD_DATE
-    FROM EVAL_MAPPING EM
+    FROM withinfo_dev.EVAL_MAPPING EM
         -- 피평가자 정보
         LEFT JOIN withinfo_dev.TUSR001_USER TU
             ON TU.INST_CD = EM.INST_CD
