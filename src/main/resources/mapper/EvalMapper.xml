@@ -47,7 +47,7 @@
         ORDER BY ID
     </select>
 
-    <!-- 3. 인사평가 매핑 -->
+    <!-- 인사평가 매핑 생성 (우리 회사 사용자/부서 구조 기반) -->
     <insert id="createEvalMapping" parameterType="map">
         <![CDATA[
     INSERT INTO withinfo_dev.EVAL_MAPPING (
@@ -73,43 +73,55 @@
         SECOND_EVAL_SUBMIT_YN
     )
     SELECT
-        M.INST_CD,
-        #{year}                             AS YEAR,
+        A.INST_CD,
+        ]]>
+        #{year} <![CDATA[                  AS YEAR,
 
-        M.EMP_NO                            AS TARGET_EMP_NO,
-        M.DEPT_CD                           AS TARGET_DEPT_CD,
-        M.DUTY_CD                           AS TARGET_DUTY_CD,
+        -- 피평가자 정보
+        A.EMP_NO                           AS TARGET_EMP_NO,
+        C.DEPT_CD                          AS TARGET_DEPT_CD,
+        A.POST_CD                          AS TARGET_DUTY_CD,
 
-        'N'                                 AS SWEAR_SUBMIT_YN,       -- 업무서약서 제출여부(초기값)
+        -- 업무서약서
+        'N'                                AS SWEAR_SUBMIT_YN,      -- 초기값: 미제출
 
         -- 자기평가
-        'Y'                                 AS SELF_EVAL_YN,
-        #{selfDueDate}                      AS SELF_EVAL_DUE_DATE,
-        'N'                                 AS SELF_EVAL_SUBMIT_YN,
+        'Y'                                AS SELF_EVAL_YN,
+        ]]>
+        #{selfDueDate} <![CDATA[           AS SELF_EVAL_DUE_DATE,
+        'N'                                AS SELF_EVAL_SUBMIT_YN,
 
         -- 1차 평가자
         CASE
-            WHEN M.DEPT_HDR_YN = 'Y'
-                THEN PHD.EMP_NO             -- 내가 부서장이면 상위 부서장
-            ELSE CHD.EMP_NO                 -- 팀원/구성원이면 현재 부서장
-        END                                 AS FIRST_EVALUATOR_EMP_NO,
-        #{firstDueDate}                     AS FIRST_EVAL_DUE_DATE,
-        'N'                                 AS FIRST_EVAL_SUBMIT_YN,
+            WHEN C.DEPT_HDR_YN = 'Y'
+                THEN PHD.EMP_NO            -- 내가 부서장이면 상위 부서장
+            ELSE CHD.EMP_NO                -- 팀원/구성원이면 현재 부서장
+        END                                AS FIRST_EVALUATOR_EMP_NO,
+        ]]>
+        #{firstDueDate} <![CDATA[          AS FIRST_EVAL_DUE_DATE,
+        'N'                                AS FIRST_EVAL_SUBMIT_YN,
 
         -- 2차 평가자
         CASE
-            WHEN M.DEPT_HDR_YN = 'Y'
-                THEN COALESCE(GHD.EMP_NO, PHD.EMP_NO)  -- 부서장이면 상위의 상위 부서장(없으면 상위 부서장)
-            ELSE PHD.EMP_NO                           -- 팀원/구성원이면 상위 부서장
-        END                                 AS SECOND_EVALUATOR_EMP_NO,
-        #{secondDueDate}                    AS SECOND_EVAL_DUE_DATE,
-        'N'                                 AS SECOND_EVAL_SUBMIT_YN
-    FROM withinfo_dev.TCOM010_EMP_DEPT M
+            WHEN C.DEPT_HDR_YN = 'Y'
+                THEN COALESCE(GHD.EMP_NO, PHD.EMP_NO)  -- 부서장: 상위의 상위 부서장(없으면 상위 부서장)
+            ELSE PHD.EMP_NO                            -- 팀원/구성원: 상위 부서장
+        END                                AS SECOND_EVALUATOR_EMP_NO,
+        ]]>
+        #{secondDueDate} <![CDATA[         AS SECOND_EVAL_DUE_DATE,
+        'N'                                AS SECOND_EVAL_SUBMIT_YN
+    FROM withinfo_dev.TUSR001_USER A
 
-    -- 부서 정보 (현재 부서)
-    JOIN withinfo_dev.TCOM003_DEPT D
-      ON D.INST_CD = M.INST_CD
-     AND D.DEPT_CD = M.DEPT_CD
+    -- 메인부서 매핑
+    LEFT JOIN withinfo_dev.TCOM010_EMP_DEPT C
+      ON A.INST_CD = C.INST_CD
+     AND A.EMP_NO = C.EMP_NO
+     AND C.MAIN_DEPT_YN = 'Y'
+
+    -- 현재 부서 정보
+    LEFT JOIN withinfo_dev.TCOM003_DEPT D
+      ON D.INST_CD = C.INST_CD
+     AND D.DEPT_CD = C.DEPT_CD
 
     -- 상위 부서 정보
     LEFT JOIN withinfo_dev.TCOM003_DEPT PD
@@ -123,19 +135,19 @@
 
     -- 현재 부서장 (팀장/실장 등)
     LEFT JOIN withinfo_dev.TCOM010_EMP_DEPT CHD
-      ON CHD.INST_CD     = M.INST_CD
-     AND CHD.DEPT_CD     = M.DEPT_CD
+      ON CHD.INST_CD      = C.INST_CD
+     AND CHD.DEPT_CD      = C.DEPT_CD
      AND CHD.MAIN_DEPT_YN = 'Y'
-     AND CHD.DEPT_HDR_YN = 'Y'
+     AND CHD.DEPT_HDR_YN  = 'Y'
 
-    -- 상위 부서장 (사업부장, 본부장 등)
+    -- 상위 부서장
     LEFT JOIN withinfo_dev.TCOM010_EMP_DEPT PHD
       ON PHD.INST_CD      = PD.INST_CD
      AND PHD.DEPT_CD      = PD.DEPT_CD
      AND PHD.MAIN_DEPT_YN = 'Y'
      AND PHD.DEPT_HDR_YN  = 'Y'
 
-    -- 상위의 상위 부서장 (부사장/더 위 레벨)
+    -- 상위의 상위 부서장
     LEFT JOIN withinfo_dev.TCOM010_EMP_DEPT GHD
       ON GHD.INST_CD      = GD.INST_CD
      AND GHD.DEPT_CD      = GD.DEPT_CD
@@ -143,14 +155,24 @@
      AND GHD.DEPT_HDR_YN  = 'Y'
 
     WHERE 1 = 1
-      -- 주부서만 평가대상
-      AND M.MAIN_DEPT_YN = 'Y'
-      -- 예: 전무/부사장 등 최상위 직급은 평가대상에서 제외 (DUTY_CD >= '70' 가정)
-      AND (M.DUTY_CD < '70' OR M.DUTY_CD IS NULL)
     ]]>
         <if test="instCd != null and instCd != ''">
-            AND M.INST_CD = #{instCd}
+            <![CDATA[
+        AND A.INST_CD = #{instCd}
+        ]]>
         </if>
+        <if test="userStCd != null and userStCd != ''">
+            <![CDATA[
+        AND A.USER_ST_CD = #{userStCd}
+        ]]>
+        </if>
+        <!-- 필요하면 평가대상 제외 규칙 (예: 임원, 전무/부사장 등) 여기에 추가 -->
+        <!-- 예시: POST_CD = '09' 인 사람 제외 -->
+        <!--
+        <![CDATA[
+          AND A.POST_CD <> '09'
+        ]]>
+        -->
     </insert>
 
 
