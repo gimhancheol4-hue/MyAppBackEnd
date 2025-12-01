@@ -73,107 +73,150 @@
         SECOND_EVAL_SUBMIT_YN
     )
     SELECT
-        A.INST_CD,
-        ]]>
-        #{year} <![CDATA[                  AS YEAR,
+        X.INST_CD,
+    ]]>
+        #{year} <![CDATA[                         AS YEAR,
 
-        -- 피평가자 정보
-        A.EMP_NO                           AS TARGET_EMP_NO,
-        C.DEPT_CD                          AS TARGET_DEPT_CD,
-        A.POST_CD                          AS TARGET_DUTY_CD,
+        X.TARGET_EMP_NO,
+        X.TARGET_DEPT_CD,
+        X.TARGET_DUTY_CD,
 
-        -- 업무서약서
-        'N'                                AS SWEAR_SUBMIT_YN,      -- 초기값: 미제출
+        'N'                                       AS SWEAR_SUBMIT_YN,
 
-        -- 자기평가
-        'Y'                                AS SELF_EVAL_YN,
-        ]]>
-        #{selfDueDate} <![CDATA[           AS SELF_EVAL_DUE_DATE,
-        'N'                                AS SELF_EVAL_SUBMIT_YN,
+        'Y'                                       AS SELF_EVAL_YN,
+    ]]>
+        #{selfDueDate} <![CDATA[                  AS SELF_EVAL_DUE_DATE,
+        'N'                                       AS SELF_EVAL_SUBMIT_YN,
 
-        -- 1차 평가자
+        X.FIRST_EVALUATOR_EMP_NO,
+    ]]>
+        #{firstDueDate} <![CDATA[                 AS FIRST_EVAL_DUE_DATE,
+        'N'                                       AS FIRST_EVAL_SUBMIT_YN,
+
+        -- 2차 평가자: 1차와 같으면 NULL 처리
         CASE
-            WHEN C.DEPT_HDR_YN = 'Y'
-                THEN PHD.EMP_NO            -- 내가 부서장이면 상위 부서장
-            ELSE CHD.EMP_NO                -- 팀원/구성원이면 현재 부서장
-        END                                AS FIRST_EVALUATOR_EMP_NO,
-        ]]>
-        #{firstDueDate} <![CDATA[          AS FIRST_EVAL_DUE_DATE,
-        'N'                                AS FIRST_EVAL_SUBMIT_YN,
+            WHEN X.SECOND_EVAL_CANDIDATE_EMP_NO IS NOT NULL
+             AND X.SECOND_EVAL_CANDIDATE_EMP_NO != X.FIRST_EVALUATOR_EMP_NO
+                THEN X.SECOND_EVAL_CANDIDATE_EMP_NO
+            ELSE NULL
+        END                                       AS SECOND_EVALUATOR_EMP_NO,
+    ]]>
+        #{secondDueDate} <![CDATA[                AS SECOND_EVAL_DUE_DATE,
+        'N'                                       AS SECOND_EVAL_SUBMIT_YN
+    FROM (
+        SELECT
+            B.INST_CD,
+            B.TARGET_EMP_NO,
+            B.TARGET_DEPT_CD,
+            B.TARGET_DUTY_CD,
+            B.FIRST_EVALUATOR_EMP_NO,
+            B.SECOND_EVAL_CANDIDATE_EMP_NO,
+            ROW_NUMBER() OVER (
+                PARTITION BY B.INST_CD, B.TARGET_EMP_NO
+                ORDER BY B.TARGET_DEPT_CD
+            ) AS RN
+        FROM (
+            SELECT
+                A.INST_CD,
+                A.EMP_NO        AS TARGET_EMP_NO,
+                C.DEPT_CD       AS TARGET_DEPT_CD,
+                A.POST_CD       AS TARGET_DUTY_CD,
 
-        -- 2차 평가자
-        CASE
-            WHEN C.DEPT_HDR_YN = 'Y'
-                THEN COALESCE(GHD.EMP_NO, PHD.EMP_NO)  -- 부서장: 상위의 상위 부서장(없으면 상위 부서장)
-            ELSE PHD.EMP_NO                            -- 팀원/구성원: 상위 부서장
-        END                                AS SECOND_EVALUATOR_EMP_NO,
-        ]]>
-        #{secondDueDate} <![CDATA[         AS SECOND_EVAL_DUE_DATE,
-        'N'                                AS SECOND_EVAL_SUBMIT_YN
-    FROM withinfo_dev.TUSR001_USER A
+                -- ✅ 1차 평가자 계산
+                CASE
+                    WHEN C.DEPT_HDR_YN = 'Y'
+                        THEN PHD.EMP_NO             -- 내가 부서장이면 상위 부서장
+                    ELSE
+                        COALESCE(CHD.EMP_NO, PHD.EMP_NO)  -- 팀원: 현재 부서장, 없으면 상위 부서장
+                END         AS FIRST_EVALUATOR_EMP_NO,
 
-    -- 메인부서 매핑
-    LEFT JOIN withinfo_dev.TCOM010_EMP_DEPT C
-      ON A.INST_CD = C.INST_CD
-     AND A.EMP_NO = C.EMP_NO
-     AND C.MAIN_DEPT_YN = 'Y'
+                -- ✅ 2차 평가자 "후보" 계산
+                CASE
+                    WHEN C.DEPT_HDR_YN = 'Y' THEN
+                        -- 부서장인 경우: 상위의 상위 부서장 있으면 그 사람, 없으면 NULL
+                        CASE
+                            WHEN GHD.EMP_NO IS NOT NULL THEN GHD.EMP_NO
+                            ELSE NULL
+                        END
+                    ELSE
+                        -- 팀원인 경우
+                        CASE
+                            WHEN CHD.EMP_NO IS NOT NULL THEN
+                                -- 팀장 존재: 1차 = CHD, 2차 = PHD (상위 부서장)
+                                PHD.EMP_NO
+                            ELSE
+                                -- 팀장 없음: 1차 = PHD, 2차 = 상위의 상위(GHD) 있으면 GHD, 없으면 NULL
+                                CASE
+                                    WHEN GHD.EMP_NO IS NOT NULL THEN GHD.EMP_NO
+                                    ELSE NULL
+                                END
+                        END
+                END         AS SECOND_EVAL_CANDIDATE_EMP_NO
 
-    -- 현재 부서 정보
-    LEFT JOIN withinfo_dev.TCOM003_DEPT D
-      ON D.INST_CD = C.INST_CD
-     AND D.DEPT_CD = C.DEPT_CD
+            FROM withinfo_dev.TUSR001_USER A
 
-    -- 상위 부서 정보
-    LEFT JOIN withinfo_dev.TCOM003_DEPT PD
-      ON PD.INST_CD = D.INST_CD
-     AND PD.DEPT_CD = D.UPPER_DEPT_CD
+            -- 메인부서 매핑
+            LEFT JOIN withinfo_dev.TCOM010_EMP_DEPT C
+              ON A.INST_CD = C.INST_CD
+             AND A.EMP_NO = C.EMP_NO
+             AND C.MAIN_DEPT_YN = 'Y'
 
-    -- 상위의 상위 부서 정보
-    LEFT JOIN withinfo_dev.TCOM003_DEPT GD
-      ON GD.INST_CD = PD.INST_CD
-     AND GD.DEPT_CD = PD.UPPER_DEPT_CD
+            -- 현재 부서 정보
+            LEFT JOIN withinfo_dev.TCOM003_DEPT D
+              ON D.INST_CD = C.INST_CD
+             AND D.DEPT_CD = C.DEPT_CD
 
-    -- 현재 부서장 (팀장/실장 등)
-    LEFT JOIN withinfo_dev.TCOM010_EMP_DEPT CHD
-      ON CHD.INST_CD      = C.INST_CD
-     AND CHD.DEPT_CD      = C.DEPT_CD
-     AND CHD.MAIN_DEPT_YN = 'Y'
-     AND CHD.DEPT_HDR_YN  = 'Y'
+            -- 상위 부서 정보
+            LEFT JOIN withinfo_dev.TCOM003_DEPT PD
+              ON PD.INST_CD = D.INST_CD
+             AND PD.DEPT_CD = D.UPPER_DEPT_CD
 
-    -- 상위 부서장
-    LEFT JOIN withinfo_dev.TCOM010_EMP_DEPT PHD
-      ON PHD.INST_CD      = PD.INST_CD
-     AND PHD.DEPT_CD      = PD.DEPT_CD
-     AND PHD.MAIN_DEPT_YN = 'Y'
-     AND PHD.DEPT_HDR_YN  = 'Y'
+            -- 상위의 상위 부서 정보
+            LEFT JOIN withinfo_dev.TCOM003_DEPT GD
+              ON GD.INST_CD = PD.INST_CD
+             AND GD.DEPT_CD = PD.UPPER_DEPT_CD
 
-    -- 상위의 상위 부서장
-    LEFT JOIN withinfo_dev.TCOM010_EMP_DEPT GHD
-      ON GHD.INST_CD      = GD.INST_CD
-     AND GHD.DEPT_CD      = GD.DEPT_CD
-     AND GHD.MAIN_DEPT_YN = 'Y'
-     AND GHD.DEPT_HDR_YN  = 'Y'
+            -- 현재 부서장
+            LEFT JOIN withinfo_dev.TCOM010_EMP_DEPT CHD
+              ON CHD.INST_CD      = C.INST_CD
+             AND CHD.DEPT_CD      = C.DEPT_CD
+             AND CHD.MAIN_DEPT_YN = 'Y'
+             AND CHD.DEPT_HDR_YN  = 'Y'
 
-    WHERE 1 = 1
+            -- 상위 부서장
+            LEFT JOIN withinfo_dev.TCOM010_EMP_DEPT PHD
+              ON PHD.INST_CD      = PD.INST_CD
+             AND PHD.DEPT_CD      = PD.DEPT_CD
+             AND PHD.MAIN_DEPT_YN = 'Y'
+             AND PHD.DEPT_HDR_YN  = 'Y'
+
+            -- 상위의 상위 부서장
+            LEFT JOIN withinfo_dev.TCOM010_EMP_DEPT GHD
+              ON GHD.INST_CD      = GD.INST_CD
+             AND GHD.DEPT_CD      = GD.DEPT_CD
+             AND GHD.MAIN_DEPT_YN = 'Y'
+             AND GHD.DEPT_HDR_YN  = 'Y'
+
+            WHERE 1 = 1
     ]]>
         <if test="instCd != null and instCd != ''">
             <![CDATA[
-        AND A.INST_CD = #{instCd}
-        ]]>
+              AND A.INST_CD = #{instCd}
+            ]]>
         </if>
         <if test="userStCd != null and userStCd != ''">
             <![CDATA[
-        AND A.USER_ST_CD = #{userStCd}
-        ]]>
+              AND A.USER_ST_CD = #{userStCd}
+            ]]>
         </if>
-        <!-- 필요하면 평가대상 제외 규칙 (예: 임원, 전무/부사장 등) 여기에 추가 -->
-        <!-- 예시: POST_CD = '09' 인 사람 제외 -->
-        <!--
         <![CDATA[
-          AND A.POST_CD <> '09'
-        ]]>
-        -->
+        ) B
+    ) X
+    WHERE X.RN = 1
+    ;
+    ]]>
     </insert>
+
 
 
     <delete id="deleteEvalMapping" parameterType="map">
