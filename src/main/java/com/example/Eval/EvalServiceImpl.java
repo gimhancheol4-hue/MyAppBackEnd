@@ -2,6 +2,7 @@ package com.example.Eval;
 
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -35,5 +36,12 @@ public class EvalServiceImpl implements EvalService {
     @Override
     public List<Map<String, Object>> getProject() {
         return evalDAO.getProject();
+    }
+
+    public int createEvalMapping(Map<String, Object> param){
+
+        evalDAO.deleteEvalMapping(param);
+
+        return evalDAO.createEvalMapping(param);
     }
 }

@@ -31,8 +31,6 @@
         ORDER BY U.ID
     </select>
 
-
-
     <!-- 3. 부서 정보 한 건 조회 -->
     <select id="getDept" resultType="map">
         SELECT
@@ -46,6 +44,92 @@
         ORDER BY ID
     </select>
 
+    <!-- 3. 인사평가 매핑 -->
+    <insert id="createEvalMapping" parameterType="map">
+        INSERT INTO EVAL_MAPPING (
+        INST_CD,
+        YEAR,
+        EVAL_TYPE,
 
+        TARGET_EMP_NO,
+        TARGET_DEPT_CD,
+        TARGET_DUTY_CD,
+
+        SWEAR_SUBMIT_YN,
+
+        SELF_EVAL_YN,
+        SELF_EVAL_DUE_DATE,
+        SELF_EVAL_SUBMIT_YN,
+
+        FIRST_EVALUATOR_EMP_NO,
+        FIRST_EVAL_DUE_DATE,
+        FIRST_EVAL_SUBMIT_YN,
+
+        SECOND_EVALUATOR_EMP_NO,
+        SECOND_EVAL_DUE_DATE,
+        SECOND_EVAL_SUBMIT_YN
+        )
+        SELECT
+        M.INST_CD,
+        #{year}                                 AS YEAR,
+        #{evalType}                             AS EVAL_TYPE,
+
+        M.EMP_NO                                AS TARGET_EMP_NO,
+        M.DEPT_CD                               AS TARGET_DEPT_CD,
+        M.DUTY_CD                                AS TARGET_DUTY_CD,
+
+        'N'                                      AS SWEAR_SUBMIT_YN,  -- 업무서약서 제출여부(초기값)
+
+        -- 자기평가
+        'Y'                                      AS SELF_EVAL_YN,
+        #{selfDueDate}                           AS SELF_EVAL_DUE_DATE,
+        'N'                                      AS SELF_EVAL_SUBMIT_YN,
+
+        -- 1차 평가자: 부서장(DEPT_HDR_YN = 'Y')
+        L1.EMP_NO                                AS FIRST_EVALUATOR_EMP_NO,
+        #{firstDueDate}                          AS FIRST_EVAL_DUE_DATE,
+        'N'                                      AS FIRST_EVAL_SUBMIT_YN,
+
+        -- 2차 평가자: 같은 부서 상위직급 중 가장 높은 사람 1명
+        L2.EMP_NO                                AS SECOND_EVALUATOR_EMP_NO,
+        #{secondDueDate}                         AS SECOND_EVAL_DUE_DATE,
+        'N'                                      AS SECOND_EVAL_SUBMIT_YN
+
+        FROM TCOM010_EMP_DEPT M
+
+        -- 1차 평가자 (부서장)
+        LEFT JOIN TCOM010_EMP_DEPT L1
+        ON L1.INST_CD = M.INST_CD
+        AND L1.DEPT_CD = M.DEPT_CD
+        AND L1.DEPT_HDR_YN = 'Y'
+        AND L1.MAIN_DEPT_YN = 'Y'
+
+        -- 2차 평가자 (상위직급 중 최고 DUTY_CD 1명)
+        LEFT JOIN TCOM010_EMP_DEPT L2
+        ON L2.INST_CD = M.INST_CD
+        AND L2.DEPT_CD = M.DEPT_CD
+        AND L2.DUTY_CD = (
+        SELECT MAX(L3.DUTY_CD)
+        FROM TCOM010_EMP_DEPT L3
+        WHERE L3.INST_CD = M.INST_CD
+        AND L3.DEPT_CD = M.DEPT_CD
+        AND L3.MAIN_DEPT_YN = 'Y'
+        AND L3.DUTY_CD > M.DUTY_CD
+        )
+        WHERE M.MAIN_DEPT_YN = 'Y'   -- 주부서만 평가대상
+        <if test="instCd != null and instCd != ''">
+            AND M.INST_CD = #{instCd}
+        </if>
+        ;
+    </insert>
+
+    <delete id="deleteEvalMapping" parameterType="map">
+        DELETE FROM EVAL_MAPPING
+        WHERE YEAR = #{year}
+        AND EVAL_TYPE = #{evalType}
+        <if test="instCd != null and instCd != ''">
+            AND INST_CD = #{instCd}
+        </if>
+    </delete>
 
 </mapper>

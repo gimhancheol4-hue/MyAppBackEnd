@@ -1,5 +1,6 @@
 package com.example.Eval;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -11,4 +12,6 @@ public interface EvalService {
     List<Map<String, Object>> getDept();
 
     List<Map<String, Object>> getProject();
+
+    int createEvalMapping(Map<String, Object> param);
 }

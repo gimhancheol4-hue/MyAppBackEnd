@@ -2,6 +2,7 @@ package com.example.Eval;
 
 import org.apache.ibatis.annotations.Mapper;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -15,4 +16,8 @@ public interface EvalDAO {
     List<Map<String, Object>> getDept();
 
     List<Map<String, Object>> getProject();
+
+    int createEvalMapping(Map<String, Object> param);
+
+    int deleteEvalMapping(Map<String, Object> param);
 }
